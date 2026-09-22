@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 
@@ -9,11 +10,24 @@ import nbformat
 RAIZ = Path(__file__).resolve().parents[1]
 
 
+def formatar_markdown(texto):
+    linhas = []
+    bloco = False
+    for linha in texto.splitlines(keepends=True):
+        if linha.lstrip().startswith('```'):
+            bloco = not bloco
+        elif not bloco:
+            linha = re.sub(r'(`+[^`]*`+)|(?<!\\)R\$',
+                           lambda m: m.group(1) or r'R\$', linha)
+        linhas.append(linha)
+    return ''.join(linhas)
+
+
 def gerar():
     celulas = []
 
     def markdown(texto):
-        celulas.append(nbformat.v4.new_markdown_cell(texto))
+        celulas.append(nbformat.v4.new_markdown_cell(formatar_markdown(texto)))
 
     def codigo(texto):
         celulas.append(nbformat.v4.new_code_cell(texto))
